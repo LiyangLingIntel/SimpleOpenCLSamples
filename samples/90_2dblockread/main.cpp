@@ -27,11 +27,17 @@ enum LSC_LDCC {
 
 std::string makeTestName(
     const std::string &func, size_t U,
-    size_t M, size_t K, size_t V)
+    size_t M, size_t K, size_t V, bool transpose, bool transform)
 {
     std::ostringstream ret;
     ret << func;
-    ret << "_u" << U << "_m" << M << "k" << K << "v" << V;
+    if ( !transpose && !transform) {
+        ret << "_u" << U << "_m" << M << "k" << K << "v" << V;
+    } else {
+        ret << (transpose ? "_transpose" : "");
+        ret << (transform ? "_transform" : "");
+        ret << "_u" << U << "_k" << K;
+    }
     return ret.str();
 }
 
@@ -39,10 +45,10 @@ template <typename T>
 static void fill_matrix(std::vector<T>& M, size_t numRows, size_t numCols)
 {
     if (zeroData) {
-        std::generate(std::begin(M, LSC_LDCC_DEFAULT), std::end(M, LSC_LDCC_DEFAULT), [&]{ return 0.0f; });
+        std::generate(std::begin(M), std::end(M), [&]{ return 0.0f; });
     }
     else if (identityData) {
-        std::generate(std::begin(M, LSC_LDCC_DEFAULT), std::end(M, LSC_LDCC_DEFAULT), [&]{ return 1.0f; });
+        std::generate(std::begin(M), std::end(M), [&]{ return 1.0f; });
     } else if (fixedData) {
         for (size_t r = 0; r < numRows; r++) {
             for (size_t c = 0; c < numCols; c++) {
@@ -53,7 +59,7 @@ static void fill_matrix(std::vector<T>& M, size_t numRows, size_t numCols)
         std::random_device dev;
         std::mt19937 rng(dev());
         std::uniform_real_distribution<float> dist(-1.0, 1.0);
-        std::generate(std::begin(M, LSC_LDCC_DEFAULT), std::end(M, LSC_LDCC_DEFAULT), [&]{ return dist(rng); });
+        std::generate(std::begin(M), std::end(M), [&]{ return dist(rng); });
     }
 }
 
@@ -77,15 +83,16 @@ static void subgroup_block_read(
     cl::Buffer& A, cl::Buffer& B,
     size_t W, size_t H, size_t P)
 {
-    printf("%80s: ", makeTestName(__FUNCTION__, BitWidth, BlockM, BlockK, ArrayLength));
+    printf("%80s: ", makeTestName(__FUNCTION__, BitWidth, BlockM, BlockK, 
+                                          ArrayLength, transpose, transform).c_str());
     fflush(stdout);
 
     std::string kernelName = "subgroup_block_read";
-    if ( transpose && transforM, LSC_LDCC_DEFAULT) {
+    if ( transpose && transform) {
         printf("unsupported.\n");
-    } else if ( !transpose && !transforM, LSC_LDCC_DEFAULT) {
+    } else if ( !transpose && !transform) {
         kernelName += "_u" + std::to_string(BitWidth);
-        kernelName += "_m" + std::to_string(BlockM, LSC_LDCC_DEFAULT);
+        kernelName += "_m" + std::to_string(BlockM);
         kernelName += "k" + std::to_string(BlockK);
         kernelName += "v" + std::to_string(ArrayLength);
     } else {
@@ -95,7 +102,7 @@ static void subgroup_block_read(
         kernelName += "_k" + std::to_string(BlockK);
     }
 
-    cl::Kernel kernel{program, kernelName};
+    cl::Kernel kernel{program, kernelName.c_str()};
     if (kernel() == nullptr) {
         printf("unsupported.\n");
     } else {
@@ -108,6 +115,49 @@ static void subgroup_block_read(
             kernel,
             cl::NullRange,
             cl::NDRange{W*H} );
+        printf(" done!\n");
+    }
+}
+
+template<int BitWidth, int BlockM, int BlockK, int ArrayLength, bool transpose, bool transform>
+static void subgroup_block_read_cacheopt(
+    cl::Context& context, cl::Program& program, cl::CommandQueue& queue,
+    cl::Buffer& A, cl::Buffer& B,
+    size_t W, size_t H, size_t P, enum LSC_LDCC cachecontrol)
+{
+    printf("%80s: ", makeTestName(__FUNCTION__, BitWidth, BlockM, BlockK, 
+                                          ArrayLength, transpose, transform).c_str());
+    fflush(stdout);
+
+    std::string kernelName = "subgroup_block_read_cacheopt";
+    if ( transpose && transform) {
+        printf("unsupported.\n");
+    } else if ( !transpose && !transform) {
+        kernelName += "_u" + std::to_string(BitWidth);
+        kernelName += "_m" + std::to_string(BlockM);
+        kernelName += "k" + std::to_string(BlockK);
+        kernelName += "v" + std::to_string(ArrayLength);
+    } else {
+        kernelName += transpose ? "_transpose" : "";
+        kernelName += transform ? "_transform" : "";
+        kernelName += "_u" + std::to_string(BitWidth);
+        kernelName += "_k" + std::to_string(BlockK);
+    }
+
+    cl::Kernel kernel{program, kernelName.c_str()};
+    if (kernel() == nullptr) {
+        printf("unsupported.\n");
+    } else {
+        kernel.setArg(0, A);
+        kernel.setArg(1, B);
+        kernel.setArg(2, static_cast<cl_int>(W));
+        kernel.setArg(3, static_cast<cl_int>(H));
+        kernel.setArg(4, static_cast<cl_int>(P));
+        queue.enqueueNDRangeKernel(
+            kernel,
+            cl::NullRange,
+            cl::NDRange{W*H} );
+        printf(" done!\n");
     }
 }
 
@@ -131,7 +181,7 @@ int main(
         op.add<popl::Value<std::string>>("", "options", "Program Build Options", buildOptions, &buildOptions);
         op.add<popl::Value<size_t>>("m", "matrixsize", "Matrix Size", matrixSize, &matrixSize);
         op.add<popl::Value<size_t>, popl::Attribute::advanced>("", "mask", "Test Mask", mask, &mask);
-        
+
         bool printUsage = false;
         try {
             op.parse(argc, argv);
@@ -205,21 +255,27 @@ int main(
         subgroup_block_read<16, 0, 16, 0, false, true>(context, program, commandQueue, A, C, M, K, M);
         subgroup_block_read<32, 0, 8, 0, true, false>(context, program, commandQueue, A, C, M, K, M);
         subgroup_block_read<64, 0, 4, 0, true, false>(context, program, commandQueue, A, C, M, K, M);
+
+        subgroup_block_read<16, 1, 16, 1, false, false>(context, program, commandQueue, A, C, M, K, M);
+        subgroup_block_read<16, 2, 16, 1, false, false>(context, program, commandQueue, A, C, M, K, M);
+        subgroup_block_read<16, 4, 16, 1, false, false>(context, program, commandQueue, A, C, M, K, M);
+        subgroup_block_read<16, 8, 16, 1, false, false>(context, program, commandQueue, A, C, M, K, M);
+        subgroup_block_read<16, 16, 16, 1, false, false>(context, program, commandQueue, A, C, M, K, M);
     }
 
     if (mask & 0x2) {
-        subgroup_block_read_cachopt<8, 1, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<8, 2, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<8, 4, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<8, 8, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<16, 1, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<16, 2, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<16, 4, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<16, 8, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<8, 0, 32, 0, false, true>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<16, 0, 16, 0, false, true>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<32, 0, 8, 0, true, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
-        subgroup_block_read_cachopt<64, 0, 4, 0, true, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<8, 1, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<8, 2, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<8, 4, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<8, 8, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<16, 1, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<16, 2, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<16, 4, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<16, 8, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<8, 0, 32, 0, false, true>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<16, 0, 16, 0, false, true>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<32, 0, 8, 0, true, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
+        subgroup_block_read_cacheopt<64, 0, 4, 0, true, false>(context, program, commandQueue, A, C, M, K, M, LSC_LDCC_DEFAULT);
     }
 
     printf("Done.\n");
