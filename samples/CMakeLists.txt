@@ -89,5 +89,7 @@ if(BUILD_EXTENSION_SAMPLES)
     add_subdirectory( 14_ooqcommandbuffers )
 endif()
 
+add_subdirectory( 90_2dblockread )
+
 add_subdirectory( 99_matrixexperiments )
 add_subdirectory( 99_matrixexperimentstf32 )
