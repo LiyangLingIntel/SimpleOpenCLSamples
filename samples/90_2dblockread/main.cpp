@@ -107,8 +107,7 @@ static void subgroup_block_read(cl::Context& context, cl::Program& program, cl::
 
 template <int BitWidth, int BlockM, int BlockK, int ArrayLength, bool transpose, bool transform>
 static void subgroup_block_read_cacheopt(cl::Context& context, cl::Program& program, cl::CommandQueue& queue,
-                                         cl::Buffer& A, cl::Buffer& B, size_t W, size_t H, size_t P,
-                                         enum LSC_LDCC cachecontrol) {
+                                         cl::Buffer& A, cl::Buffer& B, size_t W, size_t H, size_t P) {
   printf("%80s: ", makeTestName(__FUNCTION__, BitWidth, BlockM, BlockK, ArrayLength, transpose, transform).c_str());
   fflush(stdout);
 
@@ -237,30 +236,18 @@ int main(int argc, char** argv) {
   }
 
   if (mask & 0x2) {
-    subgroup_block_read_cacheopt<8, 1, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                            LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<8, 2, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                            LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<8, 4, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                            LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<8, 8, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                            LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<16, 1, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                             LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<16, 2, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                             LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<16, 4, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                             LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<16, 8, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M,
-                                                             LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<8, 0, 32, 0, false, true>(context, program, commandQueue, A, C, M, K, M,
-                                                           LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<16, 0, 16, 0, false, true>(context, program, commandQueue, A, C, M, K, M,
-                                                            LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<32, 0, 8, 0, true, false>(context, program, commandQueue, A, C, M, K, M,
-                                                           LSC_LDCC_DEFAULT);
-    subgroup_block_read_cacheopt<64, 0, 4, 0, true, false>(context, program, commandQueue, A, C, M, K, M,
-                                                           LSC_LDCC_DEFAULT);
+    subgroup_block_read_cacheopt<8, 1, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<8, 2, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<8, 4, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<8, 8, 32, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<16, 1, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<16, 2, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<16, 4, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<16, 8, 16, 2, false, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<8, 0, 32, 0, false, true>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<16, 0, 16, 0, false, true>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<32, 0, 8, 0, true, false>(context, program, commandQueue, A, C, M, K, M);
+    subgroup_block_read_cacheopt<64, 0, 4, 0, true, false>(context, program, commandQueue, A, C, M, K, M);
   }
 
   printf("Done.\n");
