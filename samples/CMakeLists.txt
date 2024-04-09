@@ -90,6 +90,7 @@ if(BUILD_EXTENSION_SAMPLES)
 endif()
 
 add_subdirectory( 90_2dblockread )
+add_subdirectory( 90_2dblockwrite )
 
 add_subdirectory( 99_matrixexperiments )
 add_subdirectory( 99_matrixexperimentstf32 )
