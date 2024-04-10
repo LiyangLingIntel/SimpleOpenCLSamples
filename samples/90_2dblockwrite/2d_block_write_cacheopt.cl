@@ -34,26 +34,22 @@ __kernel void subgroup_block_write_cacheopts_u8_m8k32v1(__global int *a, __globa
   intel_subgroup_block_write_cacheopts_u8_m8k32v1(out, W, H, P, (int2)(0, 0), val, LSC_STCC_DEFAULT);
 };
 
-__kernel void subgroup_block_write_cacheopts_u16_m1k16v1(__global int *a, __global int *out, int W, int H, int P,
-                                                        enum LSC_STCC LSC_STCC_DEFAULT) {
+__kernel void subgroup_block_write_cacheopts_u16_m1k16v1(__global int *a, __global int *out, int W, int H, int P) {
   ushort val;
   intel_subgroup_block_write_cacheopts_u16_m1k16v1(out, W, H, P, (int2)(0, 0), val, LSC_STCC_DEFAULT);
 };
 
-__kernel void subgroup_block_write_cacheopts_u16_m2k16v1(__global int *a, __global int *out, int W, int H, int P,
-                                                        enum LSC_STCC LSC_STCC_DEFAULT) {
+__kernel void subgroup_block_write_cacheopts_u16_m2k16v1(__global int *a, __global int *out, int W, int H, int P) {
   ushort2 val;
   intel_subgroup_block_write_cacheopts_u16_m2k16v1(out, W, H, P, (int2)(0, 0), val, LSC_STCC_DEFAULT);
 };
 
-__kernel void subgroup_block_write_cacheopts_u16_m4k16v1(__global int *a, __global int *out, int W, int H, int P,
-                                                        enum LSC_STCC LSC_STCC_DEFAULT) {
+__kernel void subgroup_block_write_cacheopts_u16_m4k16v1(__global int *a, __global int *out, int W, int H, int P) {
   ushort4 val;
   intel_subgroup_block_write_cacheopts_u16_m4k16v1(out, W, H, P, (int2)(0, 0), val, LSC_STCC_DEFAULT);
 };
 
-__kernel void subgroup_block_write_cacheopts_u16_m8k16v1(__global int *a, __global int *out, int W, int H, int P,
-                                                        enum LSC_STCC LSC_STCC_DEFAULT) {
+__kernel void subgroup_block_write_cacheopts_u16_m8k16v1(__global int *a, __global int *out, int W, int H, int P) {
   ushort8 val;
   intel_subgroup_block_write_cacheopts_u16_m8k16v1(out, W, H, P, (int2)(0, 0), val, LSC_STCC_DEFAULT);
 };

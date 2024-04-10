@@ -18,11 +18,15 @@ __kernel void subgroup_block_read_cacheopts_u8_m1k32v2(__global int *a, __global
   ushort2 b = intel_subgroup_block_read_cacheopts_u8_m1k32v2(a, W, H, P, (int2)(0, 0), LSC_LDCC_DEFAULT);
 };
 
+__kernel void subgroup_block_read_cacheopts_u8_m2k32v2(__global int *a, __global int *out, int W, int H, int P) {
+  ushort4 b = intel_subgroup_block_read_cacheopts_u8_m2k32v2(a, W, H, P, (int2)(0, 0), LSC_LDCC_DEFAULT);
+};
+
 __kernel void subgroup_block_read_cacheopts_u8_m4k32v2(__global int *a, __global int *out, int W, int H, int P) {
   ushort8 b = intel_subgroup_block_read_cacheopts_u8_m4k32v2(a, W, H, P, (int2)(0, 0), LSC_LDCC_DEFAULT);
 };
 
-__kernel void subgroup_block_read_cacheopts_u8_m2k32v2(__global int *a, __global int *out, int W, int H, int P) {
+__kernel void subgroup_block_read_cacheopts_u8_m8k32v2(__global int *a, __global int *out, int W, int H, int P) {
   ushort16 b = intel_subgroup_block_read_cacheopts_u8_m8k32v2(a, W, H, P, (int2)(0, 0), LSC_LDCC_DEFAULT);
 };
 
