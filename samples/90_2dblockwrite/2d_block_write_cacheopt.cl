@@ -1,3 +1,4 @@
+// build with: ocloc -internal_options "-cl-ext=+all,+cl_intel_subgroup_extended_block_read_cacheopts" -file 2d_block_write.cl -device pvc
 
 enum LSC_STCC {
   LSC_STCC_DEFAULT = 0,

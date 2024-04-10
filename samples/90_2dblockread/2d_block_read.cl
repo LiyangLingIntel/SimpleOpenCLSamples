@@ -81,7 +81,7 @@ DEFN_INTEL_SUB_GROUP_BLOCK_READ_LSC(intel_subgroup_block_read_u16_m8k16v1, ushor
 DEFN_INTEL_SUB_GROUP_BLOCK_READ_LSC(intel_subgroup_block_read_u16_m16k16v1, ushort16,
                                     __builtin_IB_subgroup_block_read_flat_u16_m16k16v1);
 
-__kernel void subgroup_block_read_u16_u16_m1k16v1(__global int *a, __global int *out, int W, int H, int P) {
+__kernel void subgroup_block_read_u16_m1k16v1(__global int *a, __global int *out, int W, int H, int P) {
   ushort b = intel_subgroup_block_read_u16_m1k16v1(a, W, H, P, (int2)(0, 0));
 };
 
