@@ -12,3 +12,6 @@ external/OpenCL-ICD-Loader/
 install/
 *~
 .ipynb_checkpoints
+*.spv
+*.bin
+**/mm_dumps/
